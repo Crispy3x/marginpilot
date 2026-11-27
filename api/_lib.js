@@ -45,7 +45,9 @@ export async function sb(path, { method = 'GET', body, prefer } = {}) {
   const r = await fetch(`${url}/rest/v1/${path}`, {
     method,
     headers: {
-      apikey: key, authorization: `Bearer ${key}`, 'content-type': 'application/json',
+      // New sb_secret_ keys go in apikey only; legacy JWT service keys also need the Bearer header.
+      apikey: key, ...(key.startsWith('sb_') ? {} : { authorization: `Bearer ${key}` }),
+      'content-type': 'application/json',
       ...(prefer ? { prefer } : {}),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
