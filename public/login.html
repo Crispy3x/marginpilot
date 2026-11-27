@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · MarginPilot</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/config.js"></script>
+</head>
+<body>
+<div class="layout">
+  <section style="flex:1 1 420px;background:#0E1726;color:#fff;padding:48px;display:flex;flex-direction:column;gap:24px;justify-content:center">
+    <div class="display" style="font-size:22px;font-weight:700">MarginPilot</div>
+    <h1 style="font-size:42px;line-height:1.1">Your eBay store, on autopilot.</h1>
+    <p style="color:#B6C2D4;font-size:17px;line-height:1.5;max-width:480px;margin:0">Supplier orders, price and stock sync, tracking uploads and AI product research for sellers who work with wholesale suppliers.</p>
+    <p style="color:#7A8BA3;font-size:12px;margin:0">Results depend on your products, suppliers and effort. MarginPilot does not guarantee sales or income.</p>
+  </section>
+  <section style="flex:1 1 420px;display:flex;align-items:center;justify-content:center;padding:48px 24px">
+    <form id="f" class="card" style="width:100%;max-width:400px;padding:30px">
+      <h2 id="heading" style="font-size:22px">Welcome back</h2>
+      <label>Email<input id="email" type="email" autocomplete="email" required></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password" minlength="8" required></label>
+      <p id="trialNote" class="muted hidden" style="margin:0">Every plan starts with a 3-day trial for $1. Cancel anytime before it ends.</p>
+      <p id="msg" class="muted" role="status" style="margin:0"></p>
+      <button class="btn" id="submit" type="submit">Sign in</button>
+      <button class="btn ghost" id="toggle" type="button">New here? Create an account</button>
+      <p class="muted" style="margin:0;text-align:center">By continuing you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>
+    </form>
+  </section>
+</div>
+<script type="module">
+import { supabase, session } from '/mp.js';
+let signUp = location.hash === '#signup';
+const $ = (id) => document.getElementById(id);
+function render() {
+  $('heading').textContent = signUp ? 'Create your account' : 'Welcome back';
+  $('submit').textContent = signUp ? 'Create account' : 'Sign in';
+  $('toggle').textContent = signUp ? 'Already have an account? Sign in' : 'New here? Create an account';
+  $('password').autocomplete = signUp ? 'new-password' : 'current-password';
+  $('trialNote').classList.toggle('hidden', !signUp);
+}
+if (await session()) location.href = '/app';
+render();
+$('toggle').onclick = () => { signUp = !signUp; $('msg').textContent = ''; render(); };
+$('f').onsubmit = async (e) => {
+  e.preventDefault();
+  $('submit').disabled = true; $('msg').textContent = '';
+  const email = $('email').value.trim(), password = $('password').value;
+  const { error, data } = signUp
+    ? await supabase.auth.signUp({ email, password, options: { emailRedirectTo: location.origin + '/onboarding' } })
+    : await supabase.auth.signInWithPassword({ email, password });
+  $('submit').disabled = false;
+  if (error) { $('msg').textContent = error.message; return; }
+  if (signUp && !data.session) { $('msg').textContent = 'Check your email to confirm your account, then sign in.'; return; }
+  location.href = signUp ? '/onboarding' : '/app';
+};
+</script>
+</body>
+</html>

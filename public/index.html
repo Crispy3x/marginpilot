@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MarginPilot</title><link rel="stylesheet" href="/styles.css"><script src="/config.js"></script></head>
+<body><main style="max-width:520px;margin:80px auto;text-align:center"><h1>MarginPilot</h1><p class="muted">Loading…</p></main>
+<script type="module">import { session } from '/mp.js'; location.replace((await session()) ? '/app' : '/login');</script>
+</body></html>

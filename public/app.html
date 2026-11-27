@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MarginPilot</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/config.js"></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="side" id="side" aria-label="Sidebar"></aside>
+  <main id="main">
+
+    <section data-view="dashboard">
+      <h1>Dashboard</h1>
+      <div id="welcome" class="notice hidden">Your trial has started. Connect your eBay store and first supplier to begin.</div>
+      <div id="noplan" class="notice warn hidden">You don’t have a plan yet. <a href="/pricing">Start a 3-day trial for $1</a> to turn on automations and AI research.</div>
+      <div class="grid">
+        <div class="card kpi"><div class="muted">Revenue (30 days)</div><div class="v">—</div><div class="muted">Connect eBay to see sales</div></div>
+        <div class="card kpi"><div class="muted">Profit (30 days)</div><div class="v">—</div><div class="muted">After eBay fees and supplier cost</div></div>
+        <div class="card kpi"><div class="muted">Orders</div><div class="v">—</div><div class="muted">Auto-fulfilled orders appear here</div></div>
+        <div class="card kpi"><div class="muted">Active listings</div><div class="v">—</div><div class="muted">Synced from your eBay store</div></div>
+      </div>
+      <div class="card"><h2>Get set up</h2>
+        <ol style="margin:0;padding-left:20px;line-height:2;font-size:14px">
+          <li><a href="/onboarding">Connect your eBay store</a></li>
+          <li><a href="#suppliers">Add a supplier you have an agreement with</a></li>
+          <li><a href="#automations">Set your margin rules</a></li>
+          <li><a href="#research">Find products with AI research</a></li>
+        </ol>
+      </div>
+    </section>
+
+    <section data-view="research" class="hidden">
+      <h1>Product research</h1>
+      <p class="muted" style="margin:0">Describe what you want to sell. AI suggests products with realistic costs, prices and risks.</p>
+      <form id="rf" class="card">
+        <label>What should we look for?<textarea id="rq" rows="3" maxlength="500" placeholder="e.g. kitchen gadgets under $40 that ship from US warehouses" required></textarea></label>
+        <button class="btn" id="rb" type="submit">Run AI research</button>
+        <p id="rmsg" class="muted" role="status" style="margin:0"></p>
+      </form>
+      <div class="card hidden" id="rout"><h2>Ideas</h2><pre class="ai" id="rtext"></pre></div>
+    </section>
+
+    <section data-view="listings" class="hidden">
+      <h1>Listings</h1>
+      <div class="card"><h2>No listings synced yet</h2><p class="muted" style="margin:0">Once your eBay store is connected, your active listings, supplier costs and margins show up here and stay in sync.</p><a class="btn ghost" href="/onboarding" style="align-self:flex-start">Connect eBay</a></div>
+    </section>
+
+    <section data-view="orders" class="hidden">
+      <h1>Orders</h1>
+      <div class="card"><h2>No orders yet</h2><p class="muted" style="margin:0">New eBay orders will be placed with your supplier automatically and tracking sent back to eBay.</p></div>
+    </section>
+
+    <section data-view="automations" class="hidden">
+      <h1>Automations</h1>
+      <form class="card" id="rules">
+        <h2>Pricing rules</h2>
+        <div class="grid">
+          <label>Target margin (%)<input id="target" type="number" min="1" max="90" value="25"></label>
+          <label>Never go below (%)<input id="floor" type="number" min="0" max="90" value="15"></label>
+          <label>Round prices to<select id="round"><option>.99</option><option>.95</option><option>.49</option></select></label>
+        </div>
+        <button class="btn" type="submit" style="align-self:flex-start">Save rules</button>
+        <p id="rulesMsg" class="muted" role="status" style="margin:0"></p>
+      </form>
+    </section>
+
+    <section data-view="suppliers" class="hidden">
+      <h1>Suppliers</h1>
+      <div class="card" id="supList"><h2>Your suppliers</h2><p class="muted" style="margin:0">None yet.</p></div>
+      <form class="card" id="sf" style="max-width:760px">
+        <h2>Connect a supplier</h2>
+        <div class="grid">
+          <label>Supplier name<input id="sname" maxlength="120" required></label>
+          <label>Connection type<select id="skind"><option value="api">API key</option><option value="feed">Product feed (CSV/XML)</option><option value="portal">Supplier portal login</option></select></label>
+        </div>
+        <label class="agree"><input type="checkbox" id="sagree"><span>I have a direct agreement with this supplier to fulfil orders for my eBay store, and I am responsible for following eBay’s dropshipping policy.</span></label>
+        <button class="btn" id="sbtn" type="submit" disabled style="align-self:flex-start">Save supplier</button>
+        <p id="smsg" class="muted" role="status" style="margin:0"></p>
+      </form>
+    </section>
+
+    <section data-view="settings" class="hidden">
+      <h1>Settings &amp; billing</h1>
+      <div class="grid">
+        <div class="card"><h2>Plan</h2><div id="planText" style="font-size:14px"></div>
+          <div id="aiText" class="muted"></div>
+          <a class="btn green" href="/pricing" style="align-self:flex-start">Change plan</a>
+          <p class="muted" style="margin:0">Payments are handled by Whop. To update your card or cancel, open your subscription in your <a href="https://whop.com" target="_blank" rel="noopener">Whop account</a>.</p>
+        </div>
+        <div class="card"><h2>Account</h2><div id="emailText" style="font-size:14px"></div>
+          <button class="btn ghost" id="signout" type="button" style="align-self:flex-start">Sign out</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script type="module">
+import { supabase, requireSession, sidebar, setActive, api, money, esc } from '/mp.js';
+const s = await requireSession();
+const me = await sidebar('dashboard');
+const $ = (id) => document.getElementById(id);
+const TIER = { none: 'No plan', starter: 'Starter', growth: 'Growth', pro: 'Pro' };
+
+function show() {
+  const v = (location.hash || '#dashboard').slice(1);
+  document.querySelectorAll('[data-view]').forEach((el) => el.classList.toggle('hidden', el.dataset.view !== v));
+  setActive(v);
+}
+window.addEventListener('hashchange', show); show();
+
+if (new URLSearchParams(location.search).get('welcome')) $('welcome').classList.remove('hidden');
+if (!me.plan || me.plan === 'none') $('noplan').classList.remove('hidden');
+
+// Settings
+$('emailText').textContent = s.user.email;
+$('planText').textContent = me.plan && me.plan !== 'none' ? `${TIER[me.plan]}${me.trial ? ' (3-day trial)' : ''} · ${me.status}` : 'No plan yet';
+$('aiText').textContent = me.ai && me.ai.allowance_usd ? `AI used this period: ${money(me.ai.spent_usd)} of ${money(me.ai.allowance_usd)}${me.trial ? ' (trial allowance)' : ''}` : '';
+$('signout').onclick = async () => { await supabase.auth.signOut(); location.href = '/login'; };
+
+// Research
+$('rf').onsubmit = async (e) => {
+  e.preventDefault();
+  $('rb').disabled = true; $('rmsg').textContent = 'Researching…';
+  const r = await api('/api/ai', { task: 'research', input: $('rq').value });
+  $('rb').disabled = false;
+  if (!r.ok) { $('rmsg').innerHTML = esc(r.data.error || 'Something went wrong.') + (r.status === 402 ? ' <a href="/pricing">See plans</a>' : ''); return; }
+  $('rmsg').textContent = `AI used: ${money(r.data.ai.spent_usd)} of ${money(r.data.ai.allowance_usd)}`;
+  $('rtext').textContent = r.data.text; $('rout').classList.remove('hidden');
+};
+
+// Pricing rules are kept in this browser for now (no store connected yet).
+const rules = JSON.parse(localStorage.getItem('mp_rules') || '{}');
+['target', 'floor', 'round'].forEach((k) => { if (rules[k]) $(k).value = rules[k]; });
+$('rules').onsubmit = (e) => {
+  e.preventDefault();
+  if (Number($('floor').value) > Number($('target').value)) { $('rulesMsg').textContent = 'The floor can’t be above your target margin.'; return; }
+  localStorage.setItem('mp_rules', JSON.stringify({ target: $('target').value, floor: $('floor').value, round: $('round').value }));
+  $('rulesMsg').textContent = 'Saved.';
+};
+
+// Suppliers
+async function loadSuppliers() {
+  const { data } = await supabase.from('suppliers').select('name,connection,agreement_confirmed_at').order('created_at');
+  if (!data || !data.length) return;
+  $('supList').innerHTML = '<h2>Your suppliers</h2><div class="scroll"><table><thead><tr><th>Name</th><th>Connection</th><th>Agreement confirmed</th></tr></thead><tbody>' +
+    data.map((x) => `<tr><td>${esc(x.name)}</td><td>${esc(x.connection)}</td><td>${new Date(x.agreement_confirmed_at).toLocaleDateString()}</td></tr>`).join('') + '</tbody></table></div>';
+}
+loadSuppliers();
+$('sagree').onchange = () => { $('sbtn').disabled = !$('sagree').checked; };
+$('sf').onsubmit = async (e) => {
+  e.preventDefault();
+  if (!$('sagree').checked) return;
+  const { error } = await supabase.from('suppliers').insert({ name: $('sname').value.trim(), connection: $('skind').value, agreement_confirmed_at: new Date().toISOString() });
+  $('smsg').textContent = error ? error.message : 'Supplier saved.';
+  if (!error) { $('sf').reset(); $('sbtn').disabled = true; loadSuppliers(); }
+};
+</script>
+</body>
+</html>

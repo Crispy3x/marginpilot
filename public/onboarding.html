@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Set up MarginPilot</title><link rel="stylesheet" href="/styles.css"><script src="/config.js"></script></head>
+<body>
+<main style="max-width:760px;margin:0 auto;padding:36px 24px">
+  <div class="display" style="font-weight:700;font-size:19px">MarginPilot</div>
+  <section class="card">
+    <h1 style="font-size:28px">Connect your eBay store</h1>
+    <p style="margin:0;color:#46566E;line-height:1.5">You’ll sign in on eBay’s own page and approve access. MarginPilot never sees your eBay password. It will be able to read orders and listings, create and edit listings, and upload tracking numbers.</p>
+    <div class="notice warn">eBay connection is being finished and opens soon. You can add suppliers, set margin rules and use AI research now.</div>
+    <button class="btn" type="button" disabled style="align-self:flex-start">Connect eBay (coming soon)</button>
+  </section>
+  <section class="card" style="margin-top:16px">
+    <h2>Next</h2>
+    <a class="btn ghost" href="/app#suppliers" style="align-self:flex-start">Add your first supplier</a>
+    <a href="/app">Go to the dashboard</a>
+  </section>
+</main>
+<script type="module">import { requireSession } from '/mp.js'; await requireSession();</script>
+</body></html>
