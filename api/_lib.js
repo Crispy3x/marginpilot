@@ -1,6 +1,6 @@
 // Shared server helpers. No npm dependencies: Supabase is reached through its REST API with fetch.
 //
-// Environment variables (set in Vercel > Project > Settings > Environment Variables):
+// Environment variables (set in Netlify > Site configuration > Environment variables):
 //   SUPABASE_URL               https://<ref>.supabase.co
 //   SUPABASE_SERVICE_ROLE_KEY  server-only key (never shipped to the browser)
 //   WHOP_WEBHOOK_SECRET        ws_... signing secret of the Whop webhook
@@ -14,7 +14,7 @@ export const env = (k, d) => process.env[k] ?? d;
 /** AI allowance per billing period, in USD. The trial cap ($1) is the owner's rule; paid allowances are adjustable. */
 export const AI_ALLOWANCE_USD = { trial: 1, starter: 3, growth: 8, pro: 20, none: 0 };
 
-/** Whop product ids -> MarginPilot tier. Set WHOP_PRODUCT_STARTER / _GROWTH / _PRO (prod_...) in Vercel. */
+/** Whop product ids -> MarginPilot tier. Set WHOP_PRODUCT_STARTER / _GROWTH / _PRO (prod_...) in Netlify. */
 export function tierForProduct(productId) {
   if (!productId) return 'none';
   if (productId === env('WHOP_PRODUCT_PRO')) return 'pro';
@@ -31,7 +31,7 @@ export function json(res, status, body) {
 }
 
 /** Raw request body as a string (needed for webhook signatures). */
-// Reads the stream directly and never touches req.body: on Vercel that getter parses JSON and loses the raw bytes.
+// Reads the stream directly and never touches req.body: on Vercel req.body parses JSON and loses the raw bytes.
 export async function rawBody(req) {
   const chunks = [];
   for await (const c of req) chunks.push(c);

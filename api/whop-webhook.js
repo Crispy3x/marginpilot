@@ -3,7 +3,7 @@
 // subscribed to membership.updated (it also carries activations and deactivations) and payment.succeeded.
 import { json, rawBody, verifyWhop, env, sb, tierForProduct } from './_lib.js';
 
-// Vercel: give the handler the raw body so the signature can be checked byte for byte.
+// Vercel only (Netlify ignores this): give the handler the raw body so the signature can be checked byte for byte.
 export const config = { api: { bodyParser: false } };
 
 const pick = (...xs) => xs.find((x) => x !== undefined && x !== null && x !== '');
